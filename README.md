@@ -1,146 +1,109 @@
+# 🚀 Smart Report Converter
 
-# Smart Report Converter
+Sistema de automação desenvolvido em **Python** e **Flask** para converter arquivos **TXT** em relatórios **Excel (.xlsx)** de forma rápida, segura e organizada.
 
+---
 
-# Excel Report Automation
-Sistema de automação desenvolvido em Python para conversão de arquivos TXT
-de folha de pagamento/consignado em relatórios Excel estruturados, com
-interface web (Flask), progresso em tempo real e geração de múltiplas abas
-formatadas.
+## 📌 Sobre o projeto
 
-## Funcionalidades
+O Smart Report Converter automatiza a conversão de arquivos TXT de folha de pagamento e consignado em planilhas Excel estruturadas, eliminando processos manuais e reduzindo o tempo gasto na geração de relatórios.
 
-- ✔ Upload de arquivo `.txt` via drag-and-drop ou seleção manual
-- ✔ Conversão assíncrona (background thread) com progresso em tempo real via Server-Sent Events
-- ✔ Geração de planilha Excel com 3 abas: `ABA_1`, `DESCONTADOS` e `NAO_DESCONTADOS`
-- ✔ Formatação automática de valores monetários e datas
-- ✔ Escolha de pasta e nome de saída
-- ✔ Logging estruturado em arquivo (`logs/app.log`)
+---
 
-## Tecnologias
+## ✨ Funcionalidades
 
-- Python 3.11+
+- 📂 Upload de arquivos TXT
+- 📊 Conversão automática para Excel (.xlsx)
+- 📈 Barra de progresso em tempo real
+- 📥 Download do relatório gerado
+- 🧾 Geração de múltiplas abas
+- 💰 Formatação automática de datas e valores
+- 📝 Registro de logs da aplicação
+
+---
+
+## 🛠 Tecnologias
+
+- Python
 - Flask
 - Pandas
 - OpenPyXL
+- HTML5
+- CSS3
+- JavaScript
 
-## Arquitetura
+---
 
-```
-Upload do .txt
-      │
-      ▼
-Thread em background (converter.py)
-      │
-      ├─► Leitura e parsing (Pandas)
-      ├─► Cálculo de valores financeiros
-      ├─► Formatação de datas
-      └─► Geração do .xlsx (OpenPyXL)
-      │
-      ▼
-Progresso via SSE (/progresso/<job_id>)
-      │
-      ▼
-Download do resultado (/download/<job_id>)
-```
+## 📁 Estrutura
 
-## Estrutura do projeto
+```text
+app/
+├── templates/
+├── __init__.py
+├── routes.py
+├── converter.py
+├── jobs.py
+├── config.py
 
-```
-smart-report-converter/
-├── app/
-│   ├── __init__.py       # Application factory
-│   ├── config.py         # Configurações via variáveis de ambiente
-│   ├── jobs.py           # Estado em memória do progresso das conversões
-│   ├── converter.py      # Lógica de conversão TXT -> XLSX
-│   ├── routes.py         # Rotas (index, converter, progresso, download)
-│   └── templates/
-│       └── index.html
-├── logs/                  # Logs da aplicação (gerado automaticamente)
-├── run.py                 # Ponto de entrada
-├── requirements.txt
-├── .env.example
-└── .gitignore
+run.py
+requirements.txt
+README.md
 ```
 
-## Como rodar localmente
+---
+
+## ▶ Como executar
 
 ```bash
-# 1. Criar e ativar um ambiente virtual
-python -m venv venv
-venv\Scripts\activate      # Windows
-source venv/bin/activate   # Linux/Mac
+git clone https://github.com/eduardosalomondev/smart-report-converter.git
 
-# 2. Instalar as dependências
+cd smart-report-converter
+
+python -m venv venv
+
+# Windows
+venv\Scripts\activate
+
 pip install -r requirements.txt
 
-# 3. (opcional) configurar variáveis de ambiente
-copy .env.example .env     # Windows
-cp .env.example .env       # Linux/Mac
-
-# 4. Rodar a aplicação
 python run.py
 ```
 
-Acesse http://localhost:5000
+Acesse:
 
-## Layout esperado do arquivo TXT de entrada
+```
+http://localhost:5000
+```
 
-Arquivo delimitado por `;`, sem cabeçalho, codificação `latin1`, com pelo
-menos 18 colunas. As colunas usadas no processamento (índices 0-based):
-`1, 2, 3, 7, 8, 9, 10, 11, 12, 14, 17` (CPF, MASP, nome, código, número do
-contrato, nome do convênio, valores, data de lançamento e desconto, etc.).
+---
 
-## Mudanças em relação à versão original
+## 📸 Funcionalidades
 
-- **Correção de segurança**: a rota de download antes aceitava um caminho
-  de arquivo arbitrário via query string (`/download?path=...`), o que
-  permitiria, em tese, ler qualquer arquivo acessível ao processo do
-  servidor. Agora o download é feito por `job_id` (`/download/<job_id>`),
-  e o caminho real do arquivo nunca é exposto nem controlado pelo cliente.
-- **Sanitização de nomes de arquivo**: tanto o nome do `.txt` enviado
-  quanto o nome do `.xlsx` de saída agora passam por `secure_filename`,
-  evitando caracteres problemáticos ou tentativas de path traversal.
-- **Tratamento de erros**: se o TXT não tiver o número de colunas
-  esperado, a aplicação avisa isso de forma clara em vez de quebrar com
-  um erro genérico do Pandas.
-- **Logging**: erros de conversão agora ficam registrados com stack trace
-  completo em `logs/app.log`, mas o usuário final vê apenas uma mensagem
-  amigável.
-- **Organização em módulos**: HTML movido para `templates/`, lógica de
-  conversão isolada em `converter.py`, rotas em `routes.py`.
+- ✅ Upload de arquivos TXT
+- ✅ Conversão TXT → Excel
+- ✅ Processamento assíncrono
+- ✅ Barra de progresso em tempo real
+- ✅ Download do relatório
+- ✅ Organização em módulos
 
-## Limitações conhecidas / próximos passos
+---
 
-- O progresso das conversões é guardado em memória (`app/jobs.py`). Como
-  é uma aplicação local/pessoal, isso é suficiente; não use com múltiplos
-  workers (`gunicorn -w 4`) sem migrar esse estado para algo compartilhado.
-- Não há autenticação — qualquer pessoa com acesso à URL pode enviar
-  arquivos e converter. Adequado para uso local/pessoal; se for expor a
-  aplicação na internet, adicione autenticação antes.
-- Não há testes automatizados ainda — próximo passo natural seria
-  `pytest` cobrindo a lógica de `converter.py`.
+## 🚀 Melhorias Futuras
 
+- Autenticação de usuários
+- Histórico de conversões
+- Banco de dados
+- Deploy em nuvem
+- Testes automatizados
 
-> Sistema de automação desenvolvido em Python para conversão de arquivos
-> TXT em relatórios Excel estruturados, com processamento assíncrono e
-> feedback de progresso em tempo real via interface web feita em Flask.
+---
 
+## 👨‍💻 Desenvolvedor
 
-- **Problema que resolve:** elimina o trabalho manual e repetitivo de
-  transformar arquivos de folha de pagamento/consignado em relatórios
-  Excel prontos para análise, separando automaticamente registros
-  descontados e não descontados.
-- **Arquitetura:** aplicação Flask organizada em módulos, processamento
-  pesado rodando em thread separada para não bloquear a requisição HTTP,
-  comunicação de progresso via Server-Sent Events.
-- **Desafios:** lidar com arquivos de entrada com layout inconsistente e
-  desenhar um fluxo de download seguro (por job_id, não por caminho
-  arbitrário).
-- **Melhorias futuras:** testes automatizados, autenticação (se for virar
-  multiusuário), fila de jobs compartilhada para escalar horizontalmente.
-=======
-> Sistema de automação desenvolvido em Python para conversão de arquivos
-> TXT em relatórios Excel estruturados, com processamento assíncrono e
-> feedback de progresso em tempo real via interface web feita em Flask.
->>>>>>> 618e7d72cb1e5ddeac6e6cf172df590e3eb5ef57
+**Eduardo Salomon**
+
+GitHub: **https://github.com/eduardosalomondev**
+
+---
+
+⭐ Se este projeto foi útil para você, deixe uma estrela no repositório.
