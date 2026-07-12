@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conversor TXT → XLSX</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #f0f2f5;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+    color: #1a1a2e;
+  }
+  .container { width: 100%; max-width: 580px; }
+  .header { text-align: center; margin-bottom: 1.5rem; }
+  .header h1 { font-size: 22px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+  .header p { font-size: 14px; color: #6b7280; }
+  .card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    padding: 1.25rem;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .section-label {
+    font-size: 11px; font-weight: 600; color: #9ca3af;
+    text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 10px;
+  }
+  .drop-zone {
+    border: 2px dashed #d1d5db; border-radius: 10px;
+    padding: 2rem 1rem; text-align: center; cursor: pointer;
+    transition: border-color 0.15s, background 0.15s; position: relative; background: #fafafa;
+  }
+  .drop-zone:hover, .drop-zone.drag-over { border-color: #3b82f6; background: #eff6ff; }
+  .drop-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-icon {
+    width: 44px; height: 44px; margin: 0 auto 12px;
+    background: #eff6ff; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .drop-icon svg { width: 20px; height: 20px; stroke: #3b82f6; fill: none; stroke-width: 1.8; }
+  .drop-text { font-size: 14px; color: #4b5563; }
+  .drop-text strong { color: #3b82f6; }
+  .drop-hint { font-size: 12px; color: #9ca3af; margin-top: 4px; }
+  .file-chip {
+    display: none; align-items: center; gap: 10px;
+    background: #f0fdf4; border: 1px solid #bbf7d0;
+    border-radius: 10px; padding: 10px 14px; margin-top: 10px;
+  }
+  .file-chip.visible { display: flex; }
+  .file-chip-icon { width: 36px; height: 36px; background: #dcfce7; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .file-chip-icon svg { width: 18px; height: 18px; stroke: #16a34a; fill: none; stroke-width: 1.8; }
+  .file-chip-name { font-size: 13px; font-weight: 600; color: #15803d; }
+  .file-chip-size { font-size: 12px; color: #4ade80; }
+  .file-chip-remove { margin-left: auto; background: none; border: none; cursor: pointer; color: #9ca3af; padding: 4px; border-radius: 6px; display: flex; }
+  .file-chip-remove:hover { color: #ef4444; background: #fee2e2; }
+  .file-chip-remove svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .dest-row { display: flex; gap: 8px; }
+  .dest-input {
+    flex: 1; height: 40px; border: 1px solid #d1d5db; border-radius: 8px;
+    padding: 0 12px; font-size: 13px; font-family: 'Consolas', monospace;
+    color: #374151; background: #fff; outline: none; transition: border-color 0.15s;
+  }
+  .dest-input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+  .dest-hint { font-size: 11px; color: #9ca3af; margin-top: 6px; }
+  .name-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .name-row label { font-size: 13px; color: #6b7280; white-space: nowrap; min-width: 110px; }
+  .name-row input {
+    flex: 1; height: 40px; border: 1px solid #d1d5db; border-radius: 8px;
+    padding: 0 12px; font-size: 13px; color: #374151; background: #fff; outline: none;
+  }
+  .name-row input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
+  .ext-badge { background: #dcfce7; color: #15803d; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
+  .run-btn {
+    width: 100%; height: 46px; border: none; border-radius: 10px;
+    background: #2563eb; color: #fff; font-size: 15px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: opacity 0.15s, transform 0.1s; font-family: inherit;
+  }
+  .run-btn:hover:not(:disabled) { opacity: 0.9; }
+  .run-btn:active:not(:disabled) { transform: scale(0.99); }
+  .run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .run-btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .progress-card { display: none; }
+  .progress-card.visible { display: block; }
+  .prog-track { height: 8px; background: #f3f4f6; border-radius: 99px; overflow: hidden; margin-bottom: 14px; }
+  .prog-fill { height: 100%; width: 0%; background: #2563eb; border-radius: 99px; transition: width 0.5s ease; }
+  .log-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .log-item {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: #4b5563;
+    opacity: 0; transform: translateY(4px); transition: opacity 0.25s, transform 0.25s;
+  }
+  .log-item.show { opacity: 1; transform: none; }
+  .log-dot { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .log-dot.running { background: #eff6ff; }
+  .log-dot.done { background: #dcfce7; }
+  .log-dot.error-dot { background: #fee2e2; }
+  .log-dot svg { width: 12px; height: 12px; fill: none; stroke-width: 2.5; }
+  .log-dot.running svg { stroke: #3b82f6; }
+  .log-dot.done svg { stroke: #16a34a; }
+  .log-dot.error-dot svg { stroke: #ef4444; }
+  .result-card { display: none; }
+  .result-card.visible { display: block; }
+  .result-box { border-radius: 10px; padding: 14px; display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+  .result-box.success { background: #f0fdf4; border: 1px solid #bbf7d0; }
+  .result-box.error { background: #fff1f2; border: 1px solid #fecdd3; }
+  .result-box-icon { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .result-box.success .result-box-icon { background: #dcfce7; }
+  .result-box.error .result-box-icon { background: #fee2e2; }
+  .result-box.success .result-box-icon svg { stroke: #16a34a; }
+  .result-box.error .result-box-icon svg { stroke: #ef4444; }
+  .result-box-icon svg { width: 18px; height: 18px; fill: none; stroke-width: 2.5; }
+  .result-title { font-size: 14px; font-weight: 600; margin-bottom: 2px; }
+  .result-box.success .result-title { color: #15803d; }
+  .result-box.error .result-title { color: #b91c1c; }
+  .result-subtitle { font-size: 12px; color: #6b7280; word-break: break-all; }
+  .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; }
+  .stat-box { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; text-align: center; }
+  .stat-label { font-size: 11px; color: #9ca3af; margin-bottom: 4px; }
+  .stat-value { font-size: 22px; font-weight: 700; color: #1a1a2e; }
+  .download-btn {
+    width: 100%; height: 42px; border: none; border-radius: 10px;
+    background: #15803d; color: #fff; font-size: 14px; font-weight: 600;
+    cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-bottom: 8px; transition: background 0.1s;
+  }
+  .download-btn:hover { background: #166534; }
+  .download-btn svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2; }
+  .download-btn.hidden { display: none; }
+  .reset-btn {
+    width: 100%; height: 40px; border: 1px solid #e5e7eb; border-radius: 10px;
+    background: transparent; color: #6b7280; font-size: 13px; cursor: pointer; font-family: inherit;
+    transition: background 0.1s;
+  }
+  .reset-btn:hover { background: #f9fafb; color: #374151; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Conversor TXT → XLSX</h1>
+    <p>Upload do arquivo, escolha onde salvar e execute a conversão.</p>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Arquivo de entrada</div>
+    <div class="drop-zone" id="drop-zone">
+      <input type="file" id="file-input" accept=".txt">
+      <div class="drop-icon">
+        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      </div>
+      <div class="drop-text"><strong>Clique para selecionar</strong> ou arraste aqui</div>
+      <div class="drop-hint">Apenas arquivos .txt</div>
+    </div>
+    <div class="file-chip" id="file-chip">
+      <div class="file-chip-icon">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      </div>
+      <div>
+        <div class="file-chip-name" id="chip-name">—</div>
+        <div class="file-chip-size" id="chip-size">—</div>
+      </div>
+      <button class="file-chip-remove" id="chip-remove">
+        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">Pasta de destino</div>
+    <div class="dest-row">
+      <input class="dest-input" id="dest-path" type="text" placeholder="Ex: C:\Users\eduardo.marques\Desktop">
+    </div>
+    <p class="dest-hint">Se deixar em branco, salva na pasta Documentos do Windows.</p>
+    <div class="name-row">
+      <label for="output-name">Nome do arquivo:</label>
+      <input id="output-name" type="text" value="arquivo_final" placeholder="arquivo_final">
+      <span class="ext-badge">.xlsx</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <button class="run-btn" id="run-btn" disabled>
+      <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      Iniciar conversão
+    </button>
+  </div>
+
+  <div class="card progress-card" id="progress-card">
+    <div class="section-label">Progresso</div>
+    <div class="prog-track"><div class="prog-fill" id="prog-fill"></div></div>
+    <ul class="log-list" id="log-list"></ul>
+  </div>
+
+  <div class="card result-card" id="result-card">
+    <div class="result-box" id="result-box">
+      <div class="result-box-icon"><svg viewBox="0 0 24 24" id="result-icon"></svg></div>
+      <div>
+        <div class="result-title" id="result-title"></div>
+        <div class="result-subtitle" id="result-subtitle"></div>
+      </div>
+    </div>
+    <div class="stats-grid" id="stats-grid"></div>
+    <button class="download-btn hidden" id="download-btn">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Baixar arquivo .xlsx
+    </button>
+    <button class="reset-btn" id="reset-btn">Converter outro arquivo</button>
+  </div>
+</div>
+
+<script>
+let selectedFile = null;
+let resultJobId = null;
+
+const fileInput = document.getElementById('file-input');
+const dropZone = document.getElementById('drop-zone');
+const fileChip = document.getElementById('file-chip');
+const chipName = document.getElementById('chip-name');
+const chipSize = document.getElementById('chip-size');
+const chipRemove = document.getElementById('chip-remove');
+const runBtn = document.getElementById('run-btn');
+const destPath = document.getElementById('dest-path');
+const outputName = document.getElementById('output-name');
+
+function fmt(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return Math.round(b/1024) + ' KB';
+  return (b/1048576).toFixed(1) + ' MB';
+}
+
+function setFile(f) {
+  if (!f || !f.name.toLowerCase().endsWith('.txt')) { alert('Selecione um arquivo .txt'); return; }
+  selectedFile = f;
+  chipName.textContent = f.name;
+  chipSize.textContent = fmt(f.size);
+  fileChip.classList.add('visible');
+  runBtn.disabled = false;
+}
+
+fileInput.addEventListener('change', e => { if (e.target.files[0]) setFile(e.target.files[0]); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]); });
+chipRemove.addEventListener('click', e => {
+  e.stopPropagation(); selectedFile = null; fileInput.value = '';
+  fileChip.classList.remove('visible'); runBtn.disabled = true;
+});
+
+function addLog(text, state) {
+  const li = document.createElement('li');
+  li.className = 'log-item';
+  const icons = {
+    running: '<circle cx="12" cy="12" r="4"/>',
+    done: '<polyline points="20 6 9 17 4 12"/>',
+    'error-dot': '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>'
+  };
+  li.innerHTML = '<span class="log-dot ' + state + '"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5">' + (icons[state]||'') + '</svg></span><span>' + text + '</span>';
+  document.getElementById('log-list').appendChild(li);
+  requestAnimationFrame(() => li.classList.add('show'));
+  return li;
+}
+
+runBtn.addEventListener('click', async () => {
+  if (!selectedFile) return;
+  document.getElementById('progress-card').classList.add('visible');
+  document.getElementById('result-card').classList.remove('visible');
+  document.getElementById('log-list').innerHTML = '';
+  document.getElementById('prog-fill').style.width = '0%';
+  document.getElementById('download-btn').classList.add('hidden');
+  runBtn.disabled = true;
+  resultJobId = null;
+
+  const formData = new FormData();
+  formData.append('arquivo', selectedFile);
+  formData.append('destino', destPath.value.trim());
+  formData.append('nome', outputName.value.trim() || 'arquivo_final');
+
+  let jobId;
+  try {
+    const res = await fetch('/converter', { method: 'POST', body: formData });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    jobId = data.job_id;
+  } catch (e) {
+    showResult(false, 'Erro ao enviar arquivo', e.message);
+    runBtn.disabled = false;
+    return;
+  }
+
+  const es = new EventSource('/progresso/' + jobId);
+  es.onmessage = e => {
+    const d = JSON.parse(e.data);
+    if (d.msg && d.msg !== 'done') {
+      addLog(d.msg, d.pct < 100 ? 'running' : 'done');
+      document.getElementById('prog-fill').style.width = d.pct + '%';
+    }
+    if (d.done) {
+      es.close();
+      resultJobId = d.job_id;
+      document.querySelectorAll('.log-item').forEach(i => {
+        i.querySelector('.log-dot').className = 'log-dot done';
+        i.querySelector('svg').innerHTML = '<polyline points="20 6 9 17 4 12"/>';
+      });
+      addLog('Arquivo salvo com sucesso!', 'done');
+      const fname = d.file_name || ((outputName.value.trim() || 'arquivo_final') + '.xlsx');
+      showResult(true, 'Conversão concluída!', 'Salvo como: ' + fname, d.rows, d.descontados, d.nao_descontados);
+      runBtn.disabled = false;
+    }
+    if (d.error) {
+      es.close();
+      showResult(false, 'Erro na conversão', d.error);
+      runBtn.disabled = false;
+    }
+  };
+  es.onerror = () => { es.close(); showResult(false, 'Erro de conexão', 'Verifique o terminal.'); runBtn.disabled = false; };
+});
+
+function showResult(ok, title, subtitle, rows, desc, nDesc) {
+  const box = document.getElementById('result-box');
+  const icon = document.getElementById('result-icon');
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-subtitle').textContent = subtitle;
+  box.className = 'result-box ' + (ok ? 'success' : 'error');
+  icon.innerHTML = ok ? '<polyline points="20 6 9 17 4 12"/>' : '<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>';
+  const stats = document.getElementById('stats-grid');
+  const dlBtn = document.getElementById('download-btn');
+  if (ok && rows !== undefined) {
+    stats.innerHTML = '<div class="stat-box"><div class="stat-label">Total de linhas</div><div class="stat-value">' + rows + '</div></div><div class="stat-box"><div class="stat-label">Descontados</div><div class="stat-value">' + desc + '</div></div><div class="stat-box"><div class="stat-label">Não descontados</div><div class="stat-value">' + nDesc + '</div></div>';
+    if (resultJobId) {
+      dlBtn.classList.remove('hidden');
+      dlBtn.onclick = () => { window.location.href = '/download/' + encodeURIComponent(resultJobId); };
+    }
+  } else { stats.innerHTML = ''; }
+  document.getElementById('result-card').classList.add('visible');
+}
+
+document.getElementById('reset-btn').addEventListener('click', () => {
+  selectedFile = null; resultJobId = null; fileInput.value = '';
+  fileChip.classList.remove('visible'); runBtn.disabled = true;
+  document.getElementById('progress-card').classList.remove('visible');
+  document.getElementById('result-card').classList.remove('visible');
+  document.getElementById('log-list').innerHTML = '';
+  document.getElementById('prog-fill').style.width = '0%';
+});
+</script>
+</body>
+</html>
