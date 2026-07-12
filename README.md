@@ -1,5 +1,9 @@
+<<<<<<< HEAD
 # Smart Report Converter
 
+=======
+# Excel Report Automation
+>>>>>>> 618e7d72cb1e5ddeac6e6cf172df590e3eb5ef57
 Sistema de automação desenvolvido em Python para conversão de arquivos TXT
 de folha de pagamento/consignado em relatórios Excel estruturados, com
 interface web (Flask), progresso em tempo real e geração de múltiplas abas
@@ -118,6 +122,7 @@ contrato, nome do convênio, valores, data de lançamento e desconto, etc.).
 - Não há testes automatizados ainda — próximo passo natural seria
   `pytest` cobrindo a lógica de `converter.py`.
 
+<<<<<<< HEAD
 ## Descrição para currículo / portfólio
 
 > Sistema de automação desenvolvido em Python para conversão de arquivos
@@ -138,3 +143,8 @@ contrato, nome do convênio, valores, data de lançamento e desconto, etc.).
   arbitrário).
 - **Melhorias futuras:** testes automatizados, autenticação (se for virar
   multiusuário), fila de jobs compartilhada para escalar horizontalmente.
+=======
+> Sistema de automação desenvolvido em Python para conversão de arquivos
+> TXT em relatórios Excel estruturados, com processamento assíncrono e
+> feedback de progresso em tempo real via interface web feita em Flask.
+>>>>>>> 618e7d72cb1e5ddeac6e6cf172df590e3eb5ef57
