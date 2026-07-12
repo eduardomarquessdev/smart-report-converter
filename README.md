@@ -3,7 +3,6 @@
 
 =======
 # Excel Report Automation
->>>>>>> 618e7d72cb1e5ddeac6e6cf172df590e3eb5ef57
 Sistema de automação desenvolvido em Python para conversão de arquivos TXT
 de folha de pagamento/consignado em relatórios Excel estruturados, com
 interface web (Flask), progresso em tempo real e geração de múltiplas abas
